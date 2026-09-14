@@ -40,13 +40,12 @@ Search queries do not just return an AI-generated summary; the dashboard explici
 *(Target ingestion interface for file parsing and initial query execution)*
 
 ![Home Screen Mockup](home_screen.png) 
-*(Note: Upload your mock UI image to an `assets/` folder in your repo and replace this link)*
+
 
 **2. Retrieval Dashboard**
 *(Target search result interface displaying AI summaries alongside retrieved ChromaDB context chunks)*
 
 ![Dashboard Mockup](Dashboard.png)
-*(Note: Upload your mock UI image to an `assets/` folder in your repo and replace this link)*
 
 ---
 
