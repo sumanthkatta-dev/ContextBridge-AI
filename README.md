@@ -1,4 +1,4 @@
-# 🔗 RAG-MCP Explorer
+# RAG-MCP Explorer
 
 **Decoupled Vector Search Interface - Powered by FastMCP and ChromaDB**
 
@@ -6,7 +6,7 @@
 
 > A full-stack web application bridging the gap between raw document embeddings and a functional, user-facing search dashboard.
 
-**🚧 Development Status:** The core backend architecture (FastAPI, ChromaDB, MCP embeddings) is currently implemented. The vanilla HTML/CSS/JS frontend is in the active design phase. The mockups below illustrate the target UI architecture currently being built.
+**Development Status:** The core backend architecture (FastAPI, ChromaDB, MCP embeddings) is currently implemented. The vanilla HTML/CSS/JS frontend is in the active design phase. The mockups below illustrate the target UI architecture currently being built.
 
 ---
 
