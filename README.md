@@ -1,72 +1,48 @@
-# RAG-MCP Explorer
+# ContextBridge AI
 
-**Decoupled Vector Search Interface - Powered by FastMCP and ChromaDB**
+A small **MCP server** that gives LLM clients retrieval over your own documents. It chunks text, embeds it locally, stores it in ChromaDB, and exposes a `retrieve_documents` tool that any MCP-compatible client (such as Claude Desktop) can call.
 
-[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](#) [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-teal.svg)](#) [![ChromaDB](https://img.shields.io/badge/ChromaDB-Vector_Store-orange.svg)](#) [![Status](https://img.shields.io/badge/Status-Frontend_In_Development-yellow.svg)](#)
+## Why I built it
 
-> A full-stack web application bridging the gap between raw document embeddings and a functional, user-facing search dashboard.
+LLMs don't know what's in your notes or docs. Instead of pasting context into every chat, I wanted the model to look things up itself. MCP is the standard way to give a model a tool, so this project wires a local vector store to an MCP tool.
 
-**Development Status:** The core backend architecture (FastAPI, ChromaDB, MCP embeddings) is currently implemented. The vanilla HTML/CSS/JS frontend is in the active design phase. The mockups below illustrate the target UI architecture currently being built.
+## How it works
 
----
+```
+sample.txt ──▶ ingestion.py ──chunks──▶ fastembed (bge-small-en-v1.5) ──▶ ChromaDB (./chroma_data)
+                                                                              ▲
+MCP client ──retrieve_documents(query)──▶ server.py (FastMCP, SSE :8000) ─────┘
+```
 
-### The Architecture Shift
+1. **Ingest:** `ingestion.py` splits the source text into 200-character chunks with 30 characters of overlap (LangChain `RecursiveCharacterTextSplitter`).
+2. **Embed:** chunks are embedded locally with `BAAI/bge-small-en-v1.5` through fastembed, so no external embedding API is needed.
+3. **Store:** embeddings go into a persistent ChromaDB collection.
+4. **Retrieve:** `server.py` runs a FastMCP server over SSE and exposes `retrieve_documents(query, n_results)`, which returns the closest chunks.
 
-| The Old Way (Script-Based MCP) | The RAG-MCP Way (Decoupled Web UI) |
-| :--- | :--- |
-| Executed primarily via terminal or CLI wrappers. | Accessed via a responsive, browser-based dashboard. |
-| Opaque retrieval process with raw JSON outputs. | Transparent context retrieval with visual confidence scores. |
-| Coupled tightly to FastMCP standard I/O. | Decoupled FastAPI backend with direct ChromaDB interfacing. |
-| Difficult to demonstrate to non-technical stakeholders. | Streamlined drag-and-drop ingestion and natural language querying. |
+## Tech stack
 
----
+Python · Model Context Protocol (FastMCP) · ChromaDB · fastembed · LangChain text splitters
 
-### Core Engineering Features
-
-**Decoupled Backend**
-Transitions the original script-based MCP implementation into a robust REST API using FastAPI. It handles PDF chunking, embedding generation, and direct ChromaDB querying without relying on JSON-RPC over SSE.
-
-**Framework-Free Frontend (In Progress)**
-The planned user interface is designed to be built entirely with Vanilla HTML5, CSS3, and JavaScript. It utilizes modern CSS properties (backdrop-filters, CSS variables) to achieve a dark-mode glassmorphism aesthetic without the overhead of React or Tailwind.
-
-**Traceable Context**
-Search queries do not just return an AI-generated summary; the dashboard explicitly renders the exact text chunks (with page numbers and relevance scores) retrieved from the vector database to ensure complete data provenance.
-
----
-
-### UI Architecture Mockups
-
-**1. Home Screen (Upload & Search)**
-*(Target ingestion interface for file parsing and initial query execution)*
-
-![Home Screen Mockup](home_screen.png) 
-
-
-**2. Retrieval Dashboard**
-*(Target search result interface displaying AI summaries alongside retrieved ChromaDB context chunks)*
-
-![Dashboard Mockup](Dashboard.png)
-
----
-
-### How It Works (3 Steps)
-
-1. **Ingest:** Drag and drop a PDF into the dashboard. 
-2. **Process:** The FastAPI backend chunks the document, generates custom embeddings, and indexes them in ChromaDB.
-3. **Retrieve:** Submit a natural language query. The system performs a similarity search and returns both a synthesized answer and the raw contextual excerpts.
-
----
-
-### Run It Locally (Backend Only)
-
-To test the current backend infrastructure locally:
+## Running locally
 
 ```bash
-# 1. Clone the repository
-git clone [https://github.com/sumanthkatta-dev/rag-mcp-explorer.git](https://github.com/sumanthkatta-dev/rag-mcp-explorer.git)
+git clone https://github.com/sumanthkatta-dev/ContextBridge-AI.git
+cd ContextBridge-AI
+python -m venv venv && source venv/bin/activate
+pip install chromadb fastembed "mcp[cli]" langchain-text-splitters
 
-# 2. Install backend dependencies
-pip install -r requirements.txt
+python ingestion.py     # index sample.txt
+python server.py        # MCP server on http://localhost:8000 (SSE)
+```
 
-# 3. Initialize the FastAPI server
-uvicorn app:app --reload --port 3000
+Then add the server to your MCP client's config and ask it a question about the indexed document. `test_server.py` calls the retrieval function directly as a quick check.
+
+## Roadmap
+
+- PDF ingestion with page numbers kept as metadata
+- A web dashboard for uploading files and inspecting retrieved chunks (early mockups below)
+- A `requirements.txt` and proper pytest tests
+
+| Upload & search (mockup) | Results view (mockup) |
+|---|---|
+| ![Home screen mockup](home_screen.png) | ![Dashboard mockup](Dashboard.png) |
